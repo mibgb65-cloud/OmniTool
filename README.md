@@ -17,7 +17,7 @@ OmniTool 是一个本地优先的浏览器工具箱。当前提供双重验证�
 
 - 应用没有后端，也不会发起网络请求。
 - 2FA 数据使用浏览器 Web Crypto 生成的非导出 AES-GCM 密钥加密，并保存在当前站点的 IndexedDB 中。
-- 安全响应头通过 [`public/_headers`](public/_headers) 配置，包括严格的内容安全策略（CSP）。
+- 安全响应头由 [`src/worker.js`](src/worker.js) 统一添加，包括严格的内容安全策略（CSP）。
 - 清除站点数据会永久移除已保存的账户。
 
 浏览器存储不等同于系统钥匙串或硬件安全密钥。能够使用当前设备和浏览器会话的人仍可生成验证码；部署站点的 GitHub 和 Cloudflare 账户也应启用强密码、2FA 和最小权限。
@@ -78,8 +78,7 @@ src/
   vault.js     IndexedDB 与本机加密存储
   worker.js    Worker 静态资源入口与安全响应头
 public/
-  _headers     Cloudflare 安全响应头
-  _redirects   单页路由回退
+  favicon.svg  站点图标
 scripts/
   build.mjs    零依赖静态构建
 tests/
