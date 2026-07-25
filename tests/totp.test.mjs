@@ -7,12 +7,23 @@ import {
   getRemainingSeconds,
   normalizeBase32,
   parseOtpAuthUri,
+  parseSecretPath,
 } from "../src/totp.js";
 
 test("normalizes and decodes Base32 secrets", () => {
   assert.equal(normalizeBase32("jbsw y3dp-ehpk3pxp=="), "JBSWY3DPEHPK3PXP");
   assert.equal(new TextDecoder().decode(decodeBase32("JBSWY3DP")), "Hello");
   assert.throws(() => normalizeBase32("not-valid-01"), /INVALID_SECRET/);
+});
+
+test("parses a Base32 secret from the 2FA route", () => {
+  const secret = "MNFY4TJDXQKT7T5N67XX7D7RO7PIOAPP";
+
+  assert.equal(parseSecretPath(`/2fa/${secret}`), secret);
+  assert.equal(parseSecretPath(`/2FA/${secret.toLowerCase()}/`), secret);
+  assert.equal(parseSecretPath("/2fa/not-valid-01"), null);
+  assert.equal(parseSecretPath("/2fa/secret/extra"), null);
+  assert.equal(parseSecretPath("/2fa"), null);
 });
 
 test("matches the RFC 4226 HOTP vectors", async () => {

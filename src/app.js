@@ -4,6 +4,7 @@ import {
   getRemainingSeconds,
   normalizeBase32,
   parseOtpAuthUri,
+  parseSecretPath,
 } from "./totp.js";
 import { loadAccounts, saveAccounts } from "./vault.js";
 
@@ -177,6 +178,18 @@ function recordStat(metric) {
     .catch(() => {});
 
   return statsRequest;
+}
+
+function loadSecretFromPath() {
+  const secret = parseSecretPath(window.location.pathname);
+
+  if (!secret) {
+    return;
+  }
+
+  window.history.replaceState(null, "", "/2fa");
+  elements.quickSecretInput.value = secret;
+  generateQuickCode();
 }
 
 function openAddDialog() {
@@ -654,6 +667,7 @@ mediaTheme.addEventListener("change", () => {
 applyTheme();
 applyLanguage();
 renderAccounts();
+loadSecretFromPath();
 recordStat("visit");
 
 try {

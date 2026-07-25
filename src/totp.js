@@ -11,6 +11,20 @@ export function normalizeBase32(value) {
   return normalized;
 }
 
+export function parseSecretPath(pathname) {
+  const match = pathname.match(/^\/2fa\/([^/]+)\/?$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  try {
+    return normalizeBase32(decodeURIComponent(match[1]));
+  } catch {
+    return null;
+  }
+}
+
 export function decodeBase32(value) {
   const normalized = normalizeBase32(value);
   let bits = "";
