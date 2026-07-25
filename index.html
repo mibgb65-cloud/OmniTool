@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta
+      name="description"
+      content="OmniTool — a private, browser-based two-factor authentication code generator."
+    >
+    <meta name="theme-color" content="#f5f5f7">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/src/styles.css">
+    <title>OmniTool · 2FA</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <a class="brand" href="/" aria-label="OmniTool home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 28 28" role="img">
+              <rect x="2" y="2" width="24" height="24" rx="7"></rect>
+              <circle cx="14" cy="14" r="5.25"></circle>
+              <path d="M14 8.75v2.5M14 16.75v2.5M8.75 14h2.5M16.75 14h2.5"></path>
+            </svg>
+          </span>
+          <span>OmniTool</span>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Tools">
+          <p class="nav-label" data-i18n="tools">工具</p>
+          <a class="nav-item is-active" href="#two-factor" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"></path>
+              <path d="m9.25 12.1 1.75 1.75 3.75-3.75"></path>
+            </svg>
+            <span data-i18n="twoFactor">双重验证</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-foot">
+          <div class="privacy-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="10" width="14" height="10" rx="3"></rect>
+              <path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10"></path>
+            </svg>
+            <div>
+              <strong data-i18n="localOnly">仅存储在此设备</strong>
+              <span data-i18n="encryptedStorage">由浏览器本机加密</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <a class="mobile-brand" href="/" aria-label="OmniTool home">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 28 28">
+                <rect x="2" y="2" width="24" height="24" rx="7"></rect>
+                <circle cx="14" cy="14" r="5.25"></circle>
+                <path d="M14 8.75v2.5M14 16.75v2.5M8.75 14h2.5M16.75 14h2.5"></path>
+              </svg>
+            </span>
+            <span>OmniTool</span>
+          </a>
+
+          <div class="topbar-actions">
+            <button class="icon-button language-button" id="languageButton" type="button">
+              <span aria-hidden="true">EN</span>
+              <span class="sr-only" data-i18n="switchLanguage">Switch language</span>
+            </button>
+            <button class="icon-button" id="themeButton" type="button">
+              <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path>
+              </svg>
+              <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.5 8.5 0 1 0 20.4 15.2Z"></path>
+              </svg>
+              <span class="sr-only" data-i18n="switchTheme">切换外观</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="content" id="two-factor">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">OmniTool / 2FA</p>
+              <h1 data-i18n="pageTitle">双重验证码</h1>
+              <p class="page-description" data-i18n="pageDescription">
+                在浏览器中安全生成动态验证码。
+              </p>
+            </div>
+            <button class="primary-button" id="openAddButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+              <span data-i18n="addAccount">添加账户</span>
+            </button>
+          </div>
+
+          <div class="security-banner" role="note">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"></path>
+              <path d="M9.5 12h5M12 9.5v5"></path>
+            </svg>
+            <p>
+              <strong data-i18n="privacyTitle">你的密钥不会离开浏览器</strong>
+              <span data-i18n="privacyBody">无账户、无云同步、无网络请求。</span>
+            </p>
+          </div>
+
+          <div class="accounts-header">
+            <h2 data-i18n="myAccounts">我的账户</h2>
+            <span class="count-badge" id="accountCount">0</span>
+          </div>
+
+          <div class="accounts-grid" id="accountsGrid" aria-live="polite"></div>
+
+          <section class="coming-soon" aria-labelledby="comingSoonTitle">
+            <div class="coming-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+                <path d="M17.5 14v7M14 17.5h7"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 id="comingSoonTitle" data-i18n="moreTools">更多工具，陆续加入</h2>
+              <p data-i18n="moreToolsBody">统一的界面与本地优先体验，为下一项工具留好位置。</p>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="modal" id="addDialog" aria-labelledby="dialogTitle">
+      <form class="modal-card" id="addForm" method="dialog">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow" data-i18n="newAccount">新账户</p>
+            <h2 id="dialogTitle" data-i18n="addTwoFactor">添加双重验证</h2>
+          </div>
+          <button class="icon-button close-button" id="closeDialogButton" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18"></path>
+            </svg>
+            <span class="sr-only" data-i18n="close">关闭</span>
+          </button>
+        </div>
+
+        <p class="modal-description" data-i18n="addDescription">
+          粘贴 Base32 密钥或完整的 otpauth:// 链接。数据只会保存在此浏览器。
+        </p>
+
+        <div class="form-field">
+          <label for="secretInput" data-i18n="secretOrLink">密钥或 otpauth 链接</label>
+          <input
+            id="secretInput"
+            name="secret"
+            type="password"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            required
+            data-i18n-placeholder="secretPlaceholder"
+            placeholder="JBSWY3DPEHPK3PXP"
+          >
+          <button class="input-action" id="toggleSecretButton" type="button">
+            <span data-i18n="show">显示</span>
+          </button>
+          <p class="field-hint" data-i18n="secretHint">通常由服务商在启用两步验证时提供。</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="issuerInput" data-i18n="serviceName">服务名称</label>
+            <input
+              id="issuerInput"
+              name="issuer"
+              type="text"
+              autocomplete="organization"
+              maxlength="64"
+              required
+              data-i18n-placeholder="servicePlaceholder"
+              placeholder="GitHub"
+            >
+          </div>
+          <div class="form-field">
+            <label for="accountInput" data-i18n="accountName">账户</label>
+            <input
+              id="accountInput"
+              name="account"
+              type="text"
+              autocomplete="username"
+              maxlength="128"
+              required
+              data-i18n-placeholder="accountPlaceholder"
+              placeholder="name@example.com"
+            >
+          </div>
+        </div>
+
+        <p class="form-error" id="formError" role="alert"></p>
+
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelButton" type="button" data-i18n="cancel">取消</button>
+          <button class="primary-button" type="submit">
+            <span data-i18n="saveAccount">保存账户</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <template id="emptyStateTemplate">
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <rect x="6" y="13" width="20" height="15" rx="5"></rect>
+            <path d="M11 13V9a5 5 0 0 1 10 0v4"></path>
+            <circle cx="16" cy="20" r="1.5"></circle>
+          </svg>
+        </div>
+        <h2 data-i18n="emptyTitle">还没有验证账户</h2>
+        <p data-i18n="emptyBody">添加一个密钥，即可在本地生成动态验证码。</p>
+        <button class="secondary-button empty-add-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          <span data-i18n="addFirstAccount">添加第一个账户</span>
+        </button>
+      </div>
+    </template>
+
+    <template id="accountCardTemplate">
+      <article class="account-card">
+        <div class="account-meta">
+          <div class="account-avatar" aria-hidden="true"></div>
+          <div class="account-identity">
+            <h3></h3>
+            <p></p>
+          </div>
+          <button class="icon-button delete-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M9 3h6l1 4H8l1-4ZM7 7l1 14h8l1-14M10 11v6M14 11v6"></path>
+            </svg>
+            <span class="sr-only" data-i18n="delete">删除</span>
+          </button>
+        </div>
+        <button class="code-button" type="button">
+          <span class="code-value">••• •••</span>
+          <span class="copy-label">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="8" y="8" width="11" height="11" rx="2"></rect>
+              <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+            </svg>
+            <span data-i18n="copyCode">复制验证码</span>
+          </span>
+        </button>
+        <div class="timer-row">
+          <progress class="timer-progress" max="30" value="30"></progress>
+          <span class="timer-label"></span>
+        </div>
+      </article>
+    </template>
+
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>
