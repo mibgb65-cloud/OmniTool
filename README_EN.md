@@ -217,4 +217,4 @@ Do not post real secrets, generated codes, or account information in public issu
 
 ## License
 
-No open-source license has been added yet. Until a license file is present, the source remains all rights reserved: public visibility does not grant permission to copy, modify, or redistribute it. The project owner should select and add an appropriate license before accepting external contributions.
+This project is licensed under the [MIT License](./LICENSE). See [`LICENSE`](./LICENSE) for the full terms.
