@@ -21,6 +21,16 @@ const elements = {
   issuerInput: document.querySelector("#issuerInput"),
   languageButton: document.querySelector("#languageButton"),
   openAddButton: document.querySelector("#openAddButton"),
+  quickClearButton: document.querySelector("#quickClearButton"),
+  quickCode: document.querySelector("#quickCode"),
+  quickCopyButton: document.querySelector("#quickCopyButton"),
+  quickError: document.querySelector("#quickError"),
+  quickForm: document.querySelector("#quickForm"),
+  quickProgress: document.querySelector("#quickProgress"),
+  quickResult: document.querySelector("#quickResult"),
+  quickSecretInput: document.querySelector("#quickSecretInput"),
+  quickTimerLabel: document.querySelector("#quickTimerLabel"),
+  quickToggleSecretButton: document.querySelector("#quickToggleSecretButton"),
   secretInput: document.querySelector("#secretInput"),
   themeButton: document.querySelector("#themeButton"),
   toggleSecretButton: document.querySelector("#toggleSecretButton"),
@@ -31,6 +41,7 @@ const mediaTheme = window.matchMedia("(prefers-color-scheme: dark)");
 const state = {
   accounts: [],
   language: readPreference("language") || (navigator.language.startsWith("zh") ? "zh" : "en"),
+  quickConfig: null,
   theme: readPreference("theme"),
   toastTimer: null,
 };
@@ -70,6 +81,12 @@ function applyLanguage() {
   elements.languageButton.querySelector("[aria-hidden]").textContent =
     state.language === "zh" ? "EN" : "中";
   applyTranslations();
+  elements.toggleSecretButton.querySelector("span").textContent = t(
+    elements.secretInput.type === "password" ? "show" : "hide",
+  );
+  elements.quickToggleSecretButton.querySelector("span").textContent = t(
+    elements.quickSecretInput.type === "password" ? "show" : "hide",
+  );
   updateCodes();
 }
 
@@ -143,6 +160,82 @@ async function copyText(value) {
   textArea.remove();
 }
 
+function parseQuickConfig() {
+  const value = elements.quickSecretInput.value.trim();
+
+  if (value.toLowerCase().startsWith("otpauth://")) {
+    return parseOtpAuthUri(value);
+  }
+
+  return {
+    secret: normalizeBase32(value),
+    digits: 6,
+    period: 30,
+    algorithm: "SHA-1",
+  };
+}
+
+async function updateQuickCode(timestamp = Date.now()) {
+  const config = state.quickConfig;
+
+  if (!config) {
+    return;
+  }
+
+  const remaining = getRemainingSeconds(config.period, timestamp);
+  elements.quickProgress.max = config.period;
+  elements.quickProgress.value = remaining;
+  elements.quickTimerLabel.textContent = t("seconds", { count: remaining });
+
+  try {
+    const code = await generateTotp(config.secret, { ...config, timestamp });
+
+    if (state.quickConfig !== config) {
+      return;
+    }
+
+    elements.quickCode.textContent = formatCode(code);
+    elements.quickCopyButton.dataset.code = code;
+  } catch {
+    elements.quickCode.textContent = t("codeUnavailable");
+    delete elements.quickCopyButton.dataset.code;
+  }
+}
+
+async function generateQuickCode() {
+  elements.quickError.textContent = "";
+  elements.quickSecretInput.setAttribute("aria-invalid", "false");
+
+  try {
+    state.quickConfig = parseQuickConfig();
+    elements.quickResult.hidden = false;
+    await updateQuickCode();
+  } catch {
+    state.quickConfig = null;
+    elements.quickResult.hidden = true;
+    elements.quickError.textContent = t("invalidSecret");
+    elements.quickSecretInput.setAttribute("aria-invalid", "true");
+  }
+}
+
+function clearQuickCode({ focus = true } = {}) {
+  state.quickConfig = null;
+  elements.quickForm.reset();
+  elements.quickSecretInput.type = "password";
+  elements.quickSecretInput.setAttribute("aria-invalid", "false");
+  elements.quickToggleSecretButton.querySelector("span").textContent = t("show");
+  elements.quickResult.hidden = true;
+  elements.quickCode.textContent = "••• •••";
+  elements.quickProgress.value = 30;
+  elements.quickTimerLabel.textContent = "";
+  elements.quickError.textContent = "";
+  delete elements.quickCopyButton.dataset.code;
+
+  if (focus) {
+    elements.quickSecretInput.focus();
+  }
+}
+
 async function deleteAccount(account) {
   if (!window.confirm(t("deleteConfirm", { name: account.issuer }))) {
     return;
@@ -213,11 +306,12 @@ function renderAccounts() {
 }
 
 async function updateCodes() {
+  const now = Date.now();
+  await updateQuickCode(now);
+
   if (state.accounts.length === 0) {
     return;
   }
-
-  const now = Date.now();
 
   await Promise.all(
     state.accounts.map(async (account) => {
@@ -339,6 +433,42 @@ function tryFillOtpAuthDetails() {
 }
 
 elements.openAddButton.addEventListener("click", openAddDialog);
+elements.quickForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  generateQuickCode();
+});
+elements.quickSecretInput.addEventListener("input", () => {
+  state.quickConfig = null;
+  elements.quickResult.hidden = true;
+  elements.quickError.textContent = "";
+  elements.quickSecretInput.setAttribute("aria-invalid", "false");
+  delete elements.quickCopyButton.dataset.code;
+});
+elements.quickSecretInput.addEventListener("paste", () => {
+  window.setTimeout(generateQuickCode, 0);
+});
+elements.quickToggleSecretButton.addEventListener("click", () => {
+  const willShow = elements.quickSecretInput.type === "password";
+  elements.quickSecretInput.type = willShow ? "text" : "password";
+  elements.quickToggleSecretButton.querySelector("span").textContent = t(
+    willShow ? "hide" : "show",
+  );
+});
+elements.quickCopyButton.addEventListener("click", async () => {
+  const code = elements.quickCopyButton.dataset.code;
+
+  if (!code) {
+    return;
+  }
+
+  try {
+    await copyText(code);
+    showToast(t("copied"));
+  } catch {
+    showToast(t("codeUnavailable"));
+  }
+});
+elements.quickClearButton.addEventListener("click", () => clearQuickCode());
 elements.closeDialogButton.addEventListener("click", closeAddDialog);
 elements.cancelButton.addEventListener("click", closeAddDialog);
 elements.addForm.addEventListener("submit", handleAddSubmit);

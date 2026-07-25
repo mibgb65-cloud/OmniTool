@@ -111,6 +111,94 @@
             </p>
           </div>
 
+          <section class="quick-generator" aria-labelledby="quickTitle">
+            <div class="quick-header">
+              <div class="quick-heading">
+                <span class="quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M14.5 4.5a4.95 4.95 0 1 0 3.9 8l2.1 2.1V17h2v2h-2v2h-3v-3.4l-2.2-2.2"></path>
+                    <circle cx="9.5" cy="9.5" r="1"></circle>
+                  </svg>
+                </span>
+                <div>
+                  <h2 id="quickTitle" data-i18n="quickTitle">快速生成</h2>
+                  <p data-i18n="quickDescription">粘贴密钥即可生成验证码，无需创建账户。</p>
+                </div>
+              </div>
+              <span class="temporary-badge">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"></path>
+                  <path d="M9.5 12h5"></path>
+                </svg>
+                <span data-i18n="temporaryOnly">临时使用 · 不保存</span>
+              </span>
+            </div>
+
+            <form class="quick-form" id="quickForm">
+              <div class="quick-input-row">
+                <div class="form-field quick-field">
+                  <label for="quickSecretInput" data-i18n="quickSecretLabel">
+                    2FA 密钥或 otpauth 链接
+                  </label>
+                  <div class="quick-secret-control">
+                    <input
+                      id="quickSecretInput"
+                      name="quickSecret"
+                      type="password"
+                      autocomplete="off"
+                      autocapitalize="characters"
+                      spellcheck="false"
+                      required
+                      aria-describedby="quickHint quickError"
+                      data-i18n-placeholder="secretPlaceholder"
+                      placeholder="JBSWY3DPEHPK3PXP"
+                    >
+                    <button
+                      class="input-action quick-toggle"
+                      id="quickToggleSecretButton"
+                      type="button"
+                    >
+                      <span data-i18n="show">显示</span>
+                    </button>
+                  </div>
+                </div>
+                <button class="primary-button quick-generate-button" type="submit">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z"></path>
+                  </svg>
+                  <span data-i18n="generateCode">生成验证码</span>
+                </button>
+              </div>
+              <p class="field-hint quick-hint" id="quickHint" data-i18n="quickHint">
+                直接粘贴会自动生成，也可以点击生成按钮。
+              </p>
+              <p class="form-error quick-error" id="quickError" role="alert"></p>
+
+              <div class="quick-result" id="quickResult" aria-live="polite" hidden>
+                <div class="quick-result-top">
+                  <div>
+                    <span class="quick-result-label" data-i18n="currentCode">当前验证码</span>
+                    <button class="quick-code-button" id="quickCopyButton" type="button">
+                      <span class="quick-code-value" id="quickCode">••• •••</span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="8" y="8" width="11" height="11" rx="2"></rect>
+                        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+                      </svg>
+                      <span class="sr-only" data-i18n="copyCode">复制验证码</span>
+                    </button>
+                  </div>
+                  <button class="secondary-button quick-clear-button" id="quickClearButton" type="button">
+                    <span data-i18n="clear">清除</span>
+                  </button>
+                </div>
+                <div class="timer-row">
+                  <progress class="timer-progress" id="quickProgress" max="30" value="30"></progress>
+                  <span class="timer-label" id="quickTimerLabel"></span>
+                </div>
+              </div>
+            </form>
+          </section>
+
           <div class="accounts-header">
             <h2 data-i18n="myAccounts">我的账户</h2>
             <span class="count-badge" id="accountCount">0</span>
