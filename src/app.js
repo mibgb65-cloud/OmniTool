@@ -35,6 +35,8 @@ const elements = {
   themeButton: document.querySelector("#themeButton"),
   toggleSecretButton: document.querySelector("#toggleSecretButton"),
   toast: document.querySelector("#toast"),
+  useCount: document.querySelector("#useCount"),
+  visitCount: document.querySelector("#visitCount"),
 };
 
 const mediaTheme = window.matchMedia("(prefers-color-scheme: dark)");
@@ -42,12 +44,14 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let activeViewTransition = null;
 let dialogClosePromise = null;
 let quickResultTimer = null;
+let statsRequest = Promise.resolve();
 
 const state = {
   accounts: [],
   enteringAccountId: null,
   language: readPreference("language") || (navigator.language.startsWith("zh") ? "zh" : "en"),
   quickConfig: null,
+  stats: null,
   theme: readPreference("theme"),
   toastTimer: null,
 };
@@ -122,6 +126,7 @@ function applyLanguage() {
   elements.quickToggleSecretButton.querySelector("span").textContent = t(
     elements.quickSecretInput.type === "password" ? "show" : "hide",
   );
+  renderStats();
   updateCodes();
 }
 
@@ -143,6 +148,35 @@ function showToast(message) {
   state.toastTimer = window.setTimeout(() => {
     elements.toast.classList.remove("is-visible");
   }, 2200);
+}
+
+function renderStats() {
+  if (!state.stats) {
+    return;
+  }
+
+  const formatter = new Intl.NumberFormat(state.language === "zh" ? "zh-CN" : "en");
+  elements.visitCount.textContent = formatter.format(state.stats.visits);
+  elements.useCount.textContent = formatter.format(state.stats.uses);
+}
+
+function recordStat(metric) {
+  statsRequest = statsRequest
+    .then(async () => {
+      const response = await fetch(`/api/stats/${metric}`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("STATS_UNAVAILABLE");
+      }
+
+      state.stats = await response.json();
+      renderStats();
+    })
+    .catch(() => {});
+
+  return statsRequest;
 }
 
 function openAddDialog() {
@@ -251,9 +285,11 @@ async function updateQuickCode(timestamp = Date.now()) {
 
     elements.quickCode.textContent = formatCode(code);
     elements.quickCopyButton.dataset.code = code;
+    return true;
   } catch {
     elements.quickCode.textContent = t("codeUnavailable");
     delete elements.quickCopyButton.dataset.code;
+    return false;
   }
 }
 
@@ -308,7 +344,11 @@ async function generateQuickCode() {
     state.quickConfig = parseQuickConfig();
     resetQuickResultVisual();
     showQuickResult();
-    await updateQuickCode();
+    const generated = await updateQuickCode();
+
+    if (generated) {
+      recordStat("use");
+    }
   } catch {
     state.quickConfig = null;
     hideQuickResult();
@@ -380,6 +420,7 @@ function createAccountCard(account) {
 
     try {
       await copyText(value);
+      recordStat("use");
       showToast(t("copied"));
     } catch {
       showToast(t("codeUnavailable"));
@@ -613,6 +654,7 @@ mediaTheme.addEventListener("change", () => {
 applyTheme();
 applyLanguage();
 renderAccounts();
+recordStat("visit");
 
 try {
   state.accounts = await loadAccounts();

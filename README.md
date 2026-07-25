@@ -12,13 +12,16 @@ OmniTool 是一个本地优先的浏览器工具箱。当前提供双重验证�
 - 自动亮色 / 暗色适配，可手动切换
 - 中文 / English 切换
 - 开屏、切换、进入和退出动画，支持系统“减少动态效果”
+- 页面内显示全站累计访问次数和使用次数
 - 响应式桌面和移动端界面
 - 零运行时依赖，不加载第三方脚本、字体或分析服务
 
 ## 隐私与安全
 
-- 应用没有后端，也不会发起网络请求。
+- 站点只向同源 Worker 提交匿名的访问和使用计数，不记录 IP、设备指纹、账户名、密钥或验证码。
+- “使用次数”包括成功使用快速生成器，以及复制已保存账户的验证码；每 30 秒的自动刷新不会计数。
 - 2FA 数据使用浏览器 Web Crypto 生成的非导出 AES-GCM 密钥加密，并保存在当前站点的 IndexedDB 中。
+- 全站累计数字保存在 Cloudflare Durable Object 中，与本机 2FA 数据完全分离。
 - 安全响应头由 [`src/worker.js`](src/worker.js) 统一添加，包括严格的内容安全策略（CSP）。
 - 清除站点数据会永久移除已保存的账户。
 
@@ -65,9 +68,9 @@ TOTP 实现通过 RFC 4226 HOTP 与 RFC 6238 TOTP 标准向量验证。
 
 6. 选择 **Deploy**。
 
-`wrangler.jsonc` 会将 `dist/` 作为静态资源部署，并由一个最小 Worker 添加安全响应头。`.node-version` 已将构建环境固定为 Node.js 22.16.0。此后向 `main` 推送会自动更新生产环境。
+`wrangler.jsonc` 会将 `dist/` 作为静态资源部署，并由 Worker 添加安全响应头和全站计数接口。首次部署时，Wrangler 会通过迁移配置自动创建 SQLite Durable Object 命名空间，不需要手动填写数据库 ID。`.node-version` 已将构建环境固定为 Node.js 22.16.0。此后向 `main` 推送会自动更新生产环境。
 
-Cloudflare 官方说明：[Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) · [Static assets](https://developers.cloudflare.com/workers/static-assets/)
+Cloudflare 官方说明：[Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) · [Static assets](https://developers.cloudflare.com/workers/static-assets/) · [Durable Objects](https://developers.cloudflare.com/durable-objects/)
 
 ## 项目结构
 
@@ -78,7 +81,7 @@ src/
   styles.css   亮暗色与响应式样式
   totp.js      Base32、HOTP、TOTP、otpauth 解析
   vault.js     IndexedDB 与本机加密存储
-  worker.js    Worker 静态资源入口与安全响应头
+  worker.js    Worker 静态资源、全站计数与安全响应头
 public/
   favicon.svg  站点图标
 scripts/

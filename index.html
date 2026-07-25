@@ -219,6 +219,30 @@
 
           <div class="accounts-grid" id="accountsGrid" aria-live="polite"></div>
 
+          <section class="site-stats" aria-labelledby="siteStatsTitle">
+            <div class="site-stats-heading">
+              <span class="site-stats-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path>
+                </svg>
+              </span>
+              <div>
+                <h2 id="siteStatsTitle" data-i18n="siteStats">站点统计</h2>
+                <p data-i18n="siteStatsDescription">仅记录全站累计数字，不识别访客。</p>
+              </div>
+            </div>
+            <dl class="site-stats-values" aria-live="polite">
+              <div>
+                <dt data-i18n="visitCount">访问次数</dt>
+                <dd id="visitCount">—</dd>
+              </div>
+              <div>
+                <dt data-i18n="useCount">使用次数</dt>
+                <dd id="useCount">—</dd>
+              </div>
+            </dl>
+          </section>
+
           <section class="coming-soon" aria-labelledby="comingSoonTitle">
             <div class="coming-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24">
