@@ -38,8 +38,14 @@ const elements = {
 };
 
 const mediaTheme = window.matchMedia("(prefers-color-scheme: dark)");
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let activeViewTransition = null;
+let dialogClosePromise = null;
+let quickResultTimer = null;
+
 const state = {
   accounts: [],
+  enteringAccountId: null,
   language: readPreference("language") || (navigator.language.startsWith("zh") ? "zh" : "en"),
   quickConfig: null,
   theme: readPreference("theme"),
@@ -60,6 +66,35 @@ function writePreference(key, value) {
   } catch {
     // Preferences can remain session-only when localStorage is unavailable.
   }
+}
+
+function waitForMotion(duration) {
+  if (reducedMotion.matches) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => window.setTimeout(resolve, duration));
+}
+
+function runViewTransition(update) {
+  if (reducedMotion.matches || !document.startViewTransition) {
+    update();
+    return;
+  }
+
+  if (activeViewTransition) {
+    activeViewTransition.finished.then(
+      () => runViewTransition(update),
+      () => runViewTransition(update),
+    );
+    return;
+  }
+
+  activeViewTransition = document.startViewTransition(update);
+  const clearTransition = () => {
+    activeViewTransition = null;
+  };
+  activeViewTransition.finished.then(clearTransition, clearTransition);
 }
 
 function t(key, variables) {
@@ -111,16 +146,36 @@ function showToast(message) {
 }
 
 function openAddDialog() {
+  if (dialogClosePromise) {
+    return;
+  }
+
   elements.addForm.reset();
   elements.secretInput.type = "password";
   elements.toggleSecretButton.querySelector("span").textContent = t("show");
   elements.formError.textContent = "";
+  elements.addDialog.classList.remove("is-closing");
   elements.addDialog.showModal();
   window.setTimeout(() => elements.secretInput.focus(), 0);
 }
 
-function closeAddDialog() {
-  elements.addDialog.close();
+async function closeAddDialog() {
+  if (!elements.addDialog.open) {
+    return;
+  }
+
+  if (dialogClosePromise) {
+    return dialogClosePromise;
+  }
+
+  elements.addDialog.classList.add("is-closing");
+  dialogClosePromise = waitForMotion(180).then(() => {
+    elements.addDialog.close();
+    elements.addDialog.classList.remove("is-closing");
+    dialogClosePromise = null;
+  });
+
+  return dialogClosePromise;
 }
 
 function getInitials(value) {
@@ -202,17 +257,61 @@ async function updateQuickCode(timestamp = Date.now()) {
   }
 }
 
+function resetQuickResultVisual() {
+  elements.quickCode.textContent = "••• •••";
+  elements.quickProgress.value = 30;
+  elements.quickTimerLabel.textContent = "";
+  delete elements.quickCopyButton.dataset.code;
+}
+
+function showQuickResult() {
+  window.clearTimeout(quickResultTimer);
+  elements.quickResult.hidden = false;
+  elements.quickResult.classList.remove("is-leaving", "is-entering");
+  void elements.quickResult.offsetWidth;
+  elements.quickResult.classList.add("is-entering");
+  quickResultTimer = window.setTimeout(() => {
+    elements.quickResult.classList.remove("is-entering");
+  }, reducedMotion.matches ? 0 : 260);
+}
+
+function hideQuickResult() {
+  window.clearTimeout(quickResultTimer);
+
+  if (elements.quickResult.hidden) {
+    resetQuickResultVisual();
+    return;
+  }
+
+  elements.quickResult.classList.remove("is-entering");
+  elements.quickResult.classList.add("is-leaving");
+
+  const finish = () => {
+    elements.quickResult.hidden = true;
+    elements.quickResult.classList.remove("is-leaving");
+    resetQuickResultVisual();
+  };
+
+  if (reducedMotion.matches) {
+    finish();
+    return;
+  }
+
+  quickResultTimer = window.setTimeout(finish, 170);
+}
+
 async function generateQuickCode() {
   elements.quickError.textContent = "";
   elements.quickSecretInput.setAttribute("aria-invalid", "false");
 
   try {
     state.quickConfig = parseQuickConfig();
-    elements.quickResult.hidden = false;
+    resetQuickResultVisual();
+    showQuickResult();
     await updateQuickCode();
   } catch {
     state.quickConfig = null;
-    elements.quickResult.hidden = true;
+    hideQuickResult();
     elements.quickError.textContent = t("invalidSecret");
     elements.quickSecretInput.setAttribute("aria-invalid", "true");
   }
@@ -224,12 +323,8 @@ function clearQuickCode({ focus = true } = {}) {
   elements.quickSecretInput.type = "password";
   elements.quickSecretInput.setAttribute("aria-invalid", "false");
   elements.quickToggleSecretButton.querySelector("span").textContent = t("show");
-  elements.quickResult.hidden = true;
-  elements.quickCode.textContent = "••• •••";
-  elements.quickProgress.value = 30;
-  elements.quickTimerLabel.textContent = "";
+  hideQuickResult();
   elements.quickError.textContent = "";
-  delete elements.quickCopyButton.dataset.code;
 
   if (focus) {
     elements.quickSecretInput.focus();
@@ -245,6 +340,9 @@ async function deleteAccount(account) {
 
   try {
     await saveAccounts(nextAccounts);
+    const card = findCard(account.id);
+    card?.classList.add("is-leaving");
+    await waitForMotion(180);
     state.accounts = nextAccounts;
     renderAccounts();
     showToast(t("deleted"));
@@ -264,6 +362,11 @@ function createAccountCard(account) {
   const deleteButton = fragment.querySelector(".delete-button");
 
   card.dataset.accountId = account.id;
+
+  if (account.id === state.enteringAccountId) {
+    card.classList.add("is-entering");
+  }
+
   avatar.textContent = getInitials(account.issuer);
   title.textContent = account.issuer;
   subtitle.textContent = account.account;
@@ -302,6 +405,7 @@ function renderAccounts() {
   state.accounts.forEach((account) => {
     elements.accountsGrid.append(createAccountCard(account));
   });
+  state.enteringAccountId = null;
   updateCodes();
 }
 
@@ -395,19 +499,18 @@ async function handleAddSubmit(event) {
     return;
   }
 
-  const nextAccounts = [
-    ...state.accounts,
-    {
-      ...account,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    },
-  ];
+  const newAccount = {
+    ...account,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+  const nextAccounts = [...state.accounts, newAccount];
 
   try {
     await saveAccounts(nextAccounts);
+    await closeAddDialog();
     state.accounts = nextAccounts;
-    closeAddDialog();
+    state.enteringAccountId = newAccount.id;
     renderAccounts();
     showToast(t("added"));
   } catch {
@@ -439,10 +542,9 @@ elements.quickForm.addEventListener("submit", (event) => {
 });
 elements.quickSecretInput.addEventListener("input", () => {
   state.quickConfig = null;
-  elements.quickResult.hidden = true;
+  hideQuickResult();
   elements.quickError.textContent = "";
   elements.quickSecretInput.setAttribute("aria-invalid", "false");
-  delete elements.quickCopyButton.dataset.code;
 });
 elements.quickSecretInput.addEventListener("paste", () => {
   window.setTimeout(generateQuickCode, 0);
@@ -479,24 +581,32 @@ elements.toggleSecretButton.addEventListener("click", () => {
   elements.toggleSecretButton.querySelector("span").textContent = t(willShow ? "hide" : "show");
 });
 elements.languageButton.addEventListener("click", () => {
-  state.language = state.language === "zh" ? "en" : "zh";
-  writePreference("language", state.language);
-  applyLanguage();
-  renderAccounts();
+  runViewTransition(() => {
+    state.language = state.language === "zh" ? "en" : "zh";
+    writePreference("language", state.language);
+    applyLanguage();
+    renderAccounts();
+  });
 });
 elements.themeButton.addEventListener("click", () => {
-  state.theme = getEffectiveTheme() === "dark" ? "light" : "dark";
-  writePreference("theme", state.theme);
-  applyTheme();
+  runViewTransition(() => {
+    state.theme = getEffectiveTheme() === "dark" ? "light" : "dark";
+    writePreference("theme", state.theme);
+    applyTheme();
+  });
 });
 elements.addDialog.addEventListener("click", (event) => {
   if (event.target === elements.addDialog) {
     closeAddDialog();
   }
 });
+elements.addDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeAddDialog();
+});
 mediaTheme.addEventListener("change", () => {
   if (!state.theme) {
-    applyTheme();
+    runViewTransition(applyTheme);
   }
 });
 
@@ -510,5 +620,9 @@ try {
 } catch {
   showToast(t("storageError"));
 }
+
+window.requestAnimationFrame(() => {
+  document.body.classList.add("is-ready");
+});
 
 window.setInterval(updateCodes, 1000);
