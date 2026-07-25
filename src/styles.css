@@ -599,7 +599,7 @@ h1 {
   gap: 10px;
 }
 
-.quick-field {
+.form-field.quick-field {
   margin: 0;
 }
 
