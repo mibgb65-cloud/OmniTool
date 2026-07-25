@@ -1,0 +1,12 @@
+{
+  "name": "omnitool",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-07-25",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
+  }
+}
+

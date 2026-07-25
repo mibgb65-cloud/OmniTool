@@ -45,27 +45,27 @@ npm run check
 
 TOTP 实现通过 RFC 4226 HOTP 与 RFC 6238 TOTP 标准向量验证。
 
-## 通过 GitHub 部署到 Cloudflare Pages
+## 通过 GitHub 部署到 Cloudflare Workers
 
 1. 将代码推送到 GitHub 仓库：`https://github.com/mibgb65-cloud/OmniTool`
 2. 登录 Cloudflare，进入 **Workers & Pages**。
-3. 选择 **Create application → Pages → Connect to Git**。
+3. 选择 **Create application → Import a repository**。
 4. 授权 GitHub，并选择 `mibgb65-cloud/OmniTool`。
 5. 使用以下构建设置：
 
    | 设置 | 值 |
    | --- | --- |
-   | Framework preset | None |
-   | Production branch | `main` |
+   | Project name | `omnitool` |
    | Build command | `npm run build` |
-   | Build output directory | `dist` |
-   | Root directory | 留空 |
+   | Deploy command | `npx wrangler deploy` |
+   | Path / Root directory | `/` |
+   | API token | 让 Cloudflare 自动创建 |
 
-6. 选择 **Save and Deploy**。
+6. 选择 **Deploy**。
 
-`.node-version` 已将构建环境固定为 Node.js 22.16.0。此后向 `main` 推送会自动更新生产环境，其他分支会生成独立的预览部署。
+`wrangler.jsonc` 会将 `dist/` 作为静态资源部署，并由一个最小 Worker 添加安全响应头。`.node-version` 已将构建环境固定为 Node.js 22.16.0。此后向 `main` 推送会自动更新生产环境。
 
-Cloudflare 官方说明：[Git integration](https://developers.cloudflare.com/pages/get-started/git-integration/) · [Build configuration](https://developers.cloudflare.com/pages/configuration/build-configuration/)
+Cloudflare 官方说明：[Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) · [Static assets](https://developers.cloudflare.com/workers/static-assets/)
 
 ## 项目结构
 
@@ -76,6 +76,7 @@ src/
   styles.css   亮暗色与响应式样式
   totp.js      Base32、HOTP、TOTP、otpauth 解析
   vault.js     IndexedDB 与本机加密存储
+  worker.js    Worker 静态资源入口与安全响应头
 public/
   _headers     Cloudflare 安全响应头
   _redirects   单页路由回退
@@ -83,4 +84,5 @@ scripts/
   build.mjs    零依赖静态构建
 tests/
   totp.test.mjs
+  worker.test.mjs
 ```
