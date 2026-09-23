@@ -1535,3 +1535,173 @@ h1 {
     animation-iteration-count: 1 !important;
   }
 }
+
+.view-tabs {
+  display: none;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-secondary);
+}
+
+.segmented-button {
+  min-height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    background 180ms ease;
+}
+
+.segmented-button:hover {
+  color: var(--text);
+}
+
+.segmented-button.is-active {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.base64-card {
+  margin-top: 40px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.base64-field {
+  margin-bottom: 14px;
+}
+
+.base64-field textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  outline: none;
+  resize: vertical;
+  color: var(--text);
+  background: var(--background);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.base64-field textarea::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.75;
+}
+
+.base64-field textarea:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px var(--focus);
+}
+
+.base64-field textarea[readonly] {
+  color: var(--text-secondary);
+  background: var(--surface-secondary);
+}
+
+.base64-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 18px;
+}
+
+.base64-field .input-action {
+  top: 35px;
+  right: 9px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.base64-field .input-action svg {
+  width: 17px;
+  height: 17px;
+}
+
+.base64-field .input-action:disabled {
+  color: var(--text-tertiary);
+  cursor: default;
+  background: transparent;
+}
+
+@media (max-width: 899px) {
+  .view-tabs {
+    display: flex;
+    position: sticky;
+    z-index: 17;
+    top: 68px;
+    gap: 2px;
+    padding: 8px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-elevated);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  .view-tab {
+    flex: 1;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+      color 180ms ease,
+      background 180ms ease;
+  }
+
+  .view-tab:hover {
+    color: var(--text);
+    background: var(--surface-secondary);
+  }
+
+  .view-tab.is-active {
+    color: var(--text);
+    background: var(--surface-secondary);
+  }
+}
+
+@media (max-width: 679px) {
+  .page-heading .segmented {
+    width: 100%;
+  }
+
+  .segmented-button {
+    flex: 1;
+  }
+
+  .base64-card {
+    padding: 18px;
+  }
+}

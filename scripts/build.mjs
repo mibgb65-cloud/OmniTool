@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, "dist");
 const clientSource = resolve(output, "src");
-const clientFiles = ["app.js", "i18n.js", "styles.css", "totp.js", "vault.js"];
+const clientFiles = ["app.js", "base64.js", "i18n.js", "styles.css", "totp.js", "vault.js"];
 
 await rm(output, { recursive: true, force: true });
 await mkdir(clientSource, { recursive: true });

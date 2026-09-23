@@ -42,12 +42,18 @@
 
         <nav class="sidebar-nav" aria-label="Tools">
           <p class="nav-label" data-i18n="tools">工具</p>
-          <a class="nav-item is-active" href="#two-factor" aria-current="page">
+          <a class="nav-item is-active" href="#two-factor" data-view="two-factor" aria-current="page">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"></path>
               <path d="m9.25 12.1 1.75 1.75 3.75-3.75"></path>
             </svg>
             <span data-i18n="twoFactor">双重验证</span>
+          </a>
+          <a class="nav-item" href="#base64" data-view="base64">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 8 4 12l5 4M15 8l5 4-5 4"></path>
+            </svg>
+            <span data-i18n="base64">Base64 编解码</span>
           </a>
         </nav>
 
@@ -95,6 +101,15 @@
             </button>
           </div>
         </header>
+
+        <nav class="view-tabs" aria-label="Tools">
+          <a class="view-tab is-active" href="#two-factor" data-view="two-factor" aria-current="page">
+            <span data-i18n="twoFactor">双重验证</span>
+          </a>
+          <a class="view-tab" href="#base64" data-view="base64">
+            <span data-i18n="base64">Base64 编解码</span>
+          </a>
+        </nav>
 
         <section class="content" id="two-factor">
           <div class="page-heading">
@@ -255,6 +270,84 @@
             <div>
               <h2 id="comingSoonTitle" data-i18n="moreTools">更多工具，陆续加入</h2>
               <p data-i18n="moreToolsBody">统一的界面与本地优先体验，为下一项工具留好位置。</p>
+            </div>
+          </section>
+        </section>
+
+        <section class="content" id="base64" hidden>
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">OmniTool / Base64</p>
+              <h1 data-i18n="base64Title">Base64 编解码</h1>
+              <p class="page-description" data-i18n="base64Description">
+                在浏览器中本地编码或解码 Base64，文本不会离开本页。
+              </p>
+            </div>
+            <div
+              class="segmented"
+              id="base64ModeGroup"
+              role="group"
+              aria-label="编解码模式"
+            >
+              <button
+                class="segmented-button is-active"
+                id="encodeButton"
+                type="button"
+                data-mode="encode"
+              >
+                <span data-i18n="modeEncode">编码</span>
+              </button>
+              <button class="segmented-button" id="decodeButton" type="button" data-mode="decode">
+                <span data-i18n="modeDecode">解码</span>
+              </button>
+            </div>
+          </div>
+
+          <section class="base64-card">
+            <div class="form-field base64-field">
+              <label for="base64Input" id="base64InputLabel" data-i18n="encodeInputLabel">
+                待编码文本
+              </label>
+              <textarea
+                id="base64Input"
+                rows="4"
+                placeholder="输入要编码的文本"
+                aria-describedby="base64Error"
+              ></textarea>
+            </div>
+
+            <p class="form-error" id="base64Error" role="alert"></p>
+
+            <div class="base64-actions">
+              <button class="secondary-button" id="base64SwapButton" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 8h13l-3-3M20 16H7l3 3"></path>
+                </svg>
+                <span data-i18n="swapMode">切换编解码</span>
+              </button>
+              <button class="secondary-button" id="base64ClearButton" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18"></path>
+                </svg>
+                <span data-i18n="clear">清除</span>
+              </button>
+            </div>
+
+            <div class="form-field base64-field">
+              <label data-i18n="outputLabel">输出</label>
+              <textarea id="base64Output" rows="4" readonly></textarea>
+              <button
+                class="input-action"
+                id="base64CopyButton"
+                type="button"
+                disabled
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="9" y="9" width="11" height="11" rx="2.5"></rect>
+                  <path d="M15 5.5A2.5 2.5 0 0 0 12.5 3H6a2.5 2.5 0 0 0-2.5 2.5V13"></path>
+                </svg>
+                <span class="sr-only" data-i18n="copyOutput">复制结果</span>
+              </button>
             </div>
           </section>
         </section>

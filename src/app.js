@@ -7,6 +7,7 @@ import {
   parseSecretPath,
 } from "./totp.js";
 import { loadAccounts, saveAccounts } from "./vault.js";
+import { decodeBase64, encodeBase64 } from "./base64.js";
 
 const elements = {
   accountCount: document.querySelector("#accountCount"),
@@ -15,8 +16,18 @@ const elements = {
   addDialog: document.querySelector("#addDialog"),
   addForm: document.querySelector("#addForm"),
   accountInput: document.querySelector("#accountInput"),
+  base64ClearButton: document.querySelector("#base64ClearButton"),
+  base64CopyButton: document.querySelector("#base64CopyButton"),
+  base64Error: document.querySelector("#base64Error"),
+  base64Input: document.querySelector("#base64Input"),
+  base64InputLabel: document.querySelector("#base64InputLabel"),
+  base64ModeGroup: document.querySelector("#base64ModeGroup"),
+  base64Output: document.querySelector("#base64Output"),
+  base64SwapButton: document.querySelector("#base64SwapButton"),
   cancelButton: document.querySelector("#cancelButton"),
   closeDialogButton: document.querySelector("#closeDialogButton"),
+  decodeButton: document.querySelector("#decodeButton"),
+  encodeButton: document.querySelector("#encodeButton"),
   emptyTemplate: document.querySelector("#emptyStateTemplate"),
   formError: document.querySelector("#formError"),
   issuerInput: document.querySelector("#issuerInput"),
@@ -49,12 +60,14 @@ let statsRequest = Promise.resolve();
 
 const state = {
   accounts: [],
+  base64Mode: "encode",
   enteringAccountId: null,
   language: readPreference("language") || (navigator.language.startsWith("zh") ? "zh" : "en"),
   quickConfig: null,
   stats: null,
   theme: readPreference("theme"),
   toastTimer: null,
+  view: "two-factor",
 };
 
 function readPreference(key) {
@@ -127,8 +140,94 @@ function applyLanguage() {
   elements.quickToggleSecretButton.querySelector("span").textContent = t(
     elements.quickSecretInput.type === "password" ? "show" : "hide",
   );
+  applyBase64Labels();
   renderStats();
   updateCodes();
+}
+
+const views = ["two-factor", "base64"];
+
+function currentView() {
+  const hash = window.location.hash.slice(1);
+  return views.includes(hash) ? hash : "two-factor";
+}
+
+function applyView() {
+  state.view = currentView();
+
+  views.forEach((id) => {
+    document.getElementById(id).hidden = id !== state.view;
+  });
+
+  document.querySelectorAll(".nav-item[data-view], .view-tab[data-view]").forEach((link) => {
+    const active = link.dataset.view === state.view;
+    link.classList.toggle("is-active", active);
+    if (active) {
+      link.setAttribute("aria-current", "page");
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+}
+
+function applyBase64Labels() {
+  const isEncode = state.base64Mode === "encode";
+
+  elements.encodeButton.classList.toggle("is-active", isEncode);
+  elements.decodeButton.classList.toggle("is-active", !isEncode);
+  elements.base64ModeGroup.setAttribute(
+    "aria-label",
+    t(isEncode ? "modeEncode" : "modeDecode"),
+  );
+  elements.base64InputLabel.textContent = t(isEncode ? "encodeInputLabel" : "decodeInputLabel");
+  elements.base64Input.placeholder = t(isEncode ? "encodeInputPlaceholder" : "decodeInputPlaceholder");
+}
+
+function setBase64Mode(mode) {
+  if (state.base64Mode === mode) {
+    return;
+  }
+
+  state.base64Mode = mode;
+  const carried = elements.base64Output.value;
+
+  if (carried) {
+    elements.base64Input.value = carried;
+  }
+
+  applyBase64Labels();
+  updateBase64Output();
+}
+
+function updateBase64Output() {
+  const value = elements.base64Input.value;
+  elements.base64Error.textContent = "";
+  elements.base64Input.setAttribute("aria-invalid", "false");
+
+  if (!value) {
+    elements.base64Output.value = "";
+    elements.base64CopyButton.disabled = true;
+    return;
+  }
+
+  try {
+    elements.base64Output.value =
+      state.base64Mode === "encode" ? encodeBase64(value) : decodeBase64(value);
+    elements.base64CopyButton.disabled = false;
+  } catch {
+    elements.base64Output.value = "";
+    elements.base64CopyButton.disabled = true;
+    elements.base64Error.textContent = t("invalidBase64");
+    elements.base64Input.setAttribute("aria-invalid", "true");
+  }
+}
+
+function clearBase64() {
+  elements.base64Input.value = "";
+  elements.base64Output.value = "";
+  elements.base64Error.textContent = "";
+  elements.base64CopyButton.disabled = true;
+  elements.base64Input.setAttribute("aria-invalid", "false");
 }
 
 function getEffectiveTheme() {
@@ -663,9 +762,33 @@ mediaTheme.addEventListener("change", () => {
     runViewTransition(applyTheme);
   }
 });
+elements.encodeButton.addEventListener("click", () => setBase64Mode("encode"));
+elements.decodeButton.addEventListener("click", () => setBase64Mode("decode"));
+elements.base64SwapButton.addEventListener("click", () =>
+  setBase64Mode(state.base64Mode === "encode" ? "decode" : "encode"),
+);
+elements.base64ClearButton.addEventListener("click", clearBase64);
+elements.base64Input.addEventListener("input", updateBase64Output);
+elements.base64CopyButton.addEventListener("click", async () => {
+  const result = elements.base64Output.value;
+
+  if (!result) {
+    return;
+  }
+
+  try {
+    await copyText(result);
+    recordStat("use");
+    showToast(t("copied"));
+  } catch {
+    showToast(t("copyFailed"));
+  }
+});
+window.addEventListener("hashchange", () => runViewTransition(applyView));
 
 applyTheme();
 applyLanguage();
+applyView();
 renderAccounts();
 loadSecretFromPath();
 recordStat("visit");

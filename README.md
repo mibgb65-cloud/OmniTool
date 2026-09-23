@@ -30,6 +30,7 @@ OmniTool 是一个本地优先的浏览器工具箱，目前专注于双重验�
 | --- | --- |
 | 本地生成 | TOTP 计算在浏览器中完成，支持 6/8 位验证码、自定义周期与 SHA-1、SHA-256、SHA-512 |
 | 快速生成 | 粘贴 Base32 密钥或 `otpauth://` 链接即可临时生成，不创建账户 |
+| Base64 编解码 | 在本地编码或解码 Base64 文本，支持中文等多字节字符，无需安装或联网 |
 | 本机加密 | 已保存账户使用 Web Crypto AES-GCM 加密，并存入当前站点的 IndexedDB |
 | 密钥链接 | 支持 `/2fa/<Base32密钥>` 自动填入和生成，并在读取后清理地址栏 |
 | 现代界面 | 苹果风格的黑白视觉、亮暗色切换、中英文切换与完整响应式布局 |
@@ -66,12 +67,20 @@ https://omnitool.aicnos.com/2fa/<Base32密钥>
 > [!WARNING]
 > URL 路径会随首次 HTTP 请求发送给 Cloudflare，也可能进入浏览器历史、代理或基础设施日志。清理地址栏不能撤回首次请求。不要通过不可信渠道分享真实的 2FA 密钥链接；已暴露的真实密钥应在对应服务中重新生成。
 
+### Base64 编解码
+
+1. 在侧边栏或移动端顶部标签页选择“Base64 编解码”。
+2. 选择“编码”或“解码”，输入或粘贴文本即可实时得到结果。
+3. 选择“切换编解码”会把当前结果带入输入框并反转方向；选择“复制结果”保存到剪贴板。
+
+Base64 是编码而非加密，不需要密钥，任何人都可以还原内容，因此不要用它替代加密。解码支持省略补位符和包含换行的粘贴文本；多字节字符（例如中文）按 UTF-8 处理。
+
 ## 隐私与安全模型
 
 - 手动输入或保存在浏览器中的密钥不会通过统计接口提交。
 - 账户库使用浏览器生成的不可导出 AES-GCM 密钥加密，并与密文一起保存在当前站点的 IndexedDB 中。
 - 站点统计只记录 `访问` 与 `使用` 两类累计数字；应用不会将 IP、设备指纹、账户名、2FA 密钥或验证码写入统计存储。
-- “使用次数”在快速生成成功或复制已保存账户的验证码时增加；每 30 秒的自动刷新不会增加计数。
+- “使用次数”在快速生成成功、复制已保存账户的验证码或复制 Base64 结果时增加；每 30 秒的自动刷新不会增加计数。
 - 全站累计数字保存在 Cloudflare SQLite Durable Object 中，与本机账户库分离。
 - Worker 设置 CSP、HSTS、`Referrer-Policy: no-referrer`、`X-Content-Type-Options`、`X-Frame-Options` 等安全响应头。
 - 项目不加载第三方前端脚本、远程字体或第三方分析 SDK。
@@ -95,7 +104,7 @@ flowchart LR
 - IndexedDB：本机加密账户存储
 - Cloudflare Workers Static Assets：静态站点托管
 - Cloudflare Durable Objects（SQLite）：原子化全站计数
-- Node.js 内置测试运行器：RFC 与 Worker 行为测试
+- Node.js 内置测试运行器：RFC、Base64 与 Worker 行为测试
 
 TOTP 实现包含 RFC 4226 HOTP 与 RFC 6238 TOTP 标准向量测试。
 
@@ -140,7 +149,7 @@ npx wrangler dev
 | 命令 | 用途 |
 | --- | --- |
 | `npm run build` | 将允许发布的静态文件构建到 `dist/` |
-| `npm test` | 运行 TOTP 与 Worker 单元测试 |
+| `npm test` | 运行 TOTP、Base64 与 Worker 单元测试 |
 | `npm run check` | 先运行全部测试，再执行生产构建 |
 | `npx wrangler dev` | 本地运行 Static Assets、Worker API 与 Durable Object |
 | `npx wrangler deploy` | 部署到 Cloudflare Workers |
@@ -186,12 +195,14 @@ npx wrangler dev
 │   └── build.mjs
 ├── src/
 │   ├── app.js
+│   ├── base64.js
 │   ├── i18n.js
 │   ├── styles.css
 │   ├── totp.js
 │   ├── vault.js
 │   └── worker.js
 ├── tests/
+│   ├── base64.test.mjs
 │   ├── totp.test.mjs
 │   └── worker.test.mjs
 ├── README.md
